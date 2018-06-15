@@ -1,0 +1,49 @@
+go atlas
+
+mesh space.mult=0.5
+x.mesh loc=0.00 spac=0.3
+x.mesh loc=0.25 spac=0.2
+x.mesh loc=0.50 spac=0.05
+x.mesh loc=1.50 spac=0.05
+x.mesh loc=1.75 spac=0.2
+x.mesh loc=2.00 spac=0.3
+
+y.mesh loc=-0.20 spac=0.1
+y.mesh loc=-0.10 spac=0.1
+y.mesh loc=0.00 spac=0.1
+y.mesh loc=0.20 spac=0.1
+y.mesh loc=1.00 spac=0.1
+
+region num=1 silicon x.min=0.0 x.max=2.0 y.min=0.0 y.max=1.0
+region num=2 oxide x.min=0.00 x.max=2.0 y.min=-0.2 y.max=0.0
+
+electr name=source x.min=0.0 x.max=0.25 y.min=-0.2 y.max=0.0
+electr name=drain  x.min=1.75 x.max=2.00 y.min=-0.2 y.max=0.0
+electr name=gate   x.min=0.50 x.max=1.50 y.min=-0.2 y.max=-0.1 material=poly
+electr name=substrate x.min=0.0 x.max=2.0 y.min=1.0 y.max=1.0
+
+doping p-type uniform conc=5e15
+doping n-type uniform conc=1e19 x.min=0.0 x.max=0.5 y.min=0.0 y.max=0.2
+doping n-type uniform conc=1e19 x.min=1.5 x.max=2.0 y.min=0.0 y.max=0.2
+
+model conmob fldmob srh auger bgn
+output con.band val.band
+solve init
+method newton
+
+solve vdrain=0.5
+log outf=mosfet.log
+solve vgate=0.0 vstep=0.5 vfinal=5.0 name=gate
+
+save outf=mosfet.str
+tonyplot mosfet.str
+
+tonyplot mosfet.log
+
+extract name="nsubvt" 1.0/slope(maxslope(curve(abs(v."gate"),log10(abs(i."drain")))))
+tonyplot mos1ex03_1.log -set mosfet.log.set
+
+extract name="nvt" (xintercept(maxslope(curve(abs(v."gate"),abs(i."drain")))) \
+	- abs(ave(v."drain"))/2.0)
+
+quit
